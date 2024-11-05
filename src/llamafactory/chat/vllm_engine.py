@@ -56,7 +56,8 @@ class VllmEngine(BaseEngine):
     ) -> None:
         config = load_config(model_args)  # may download model from ms hub
         if getattr(config, "quantization_config", None):  # gptq models should use float16
-            quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
+            quantization_config: Dict[str, Any] = getattr(
+                config, "quantization_config", None)
             quant_method = quantization_config.get("quant_method", "")
             if quant_method == QuantizationMethod.GPTQ and model_args.infer_dtype == "auto":
                 model_args.infer_dtype = "float16"
@@ -90,9 +91,11 @@ class VllmEngine(BaseEngine):
             logger.info_rank0("Detected Yi-VL model, applying projector patch.")
             vllm.model_executor.models.llava.LlavaMultiModalProjector = LlavaMultiModalProjectorForYiVLForVLLM
 
-        self.model = AsyncLLMEngine.from_engine_args(AsyncEngineArgs(**engine_args))
+        self.model = AsyncLLMEngine.from_engine_args(
+            AsyncEngineArgs(**engine_args))
         if model_args.adapter_name_or_path is not None:
-            self.lora_request = LoRARequest("default", 1, model_args.adapter_name_or_path[0])
+            self.lora_request = LoRARequest(
+                "default", 1, model_args.adapter_name_or_path[0])
         else:
             self.lora_request = None
 
@@ -120,10 +123,17 @@ class VllmEngine(BaseEngine):
         top_p: Optional[float] = input_kwargs.pop("top_p", None)
         top_k: Optional[float] = input_kwargs.pop("top_k", None)
         num_return_sequences: int = input_kwargs.pop("num_return_sequences", 1)
-        repetition_penalty: Optional[float] = input_kwargs.pop("repetition_penalty", None)
-        length_penalty: Optional[float] = input_kwargs.pop("length_penalty", None)
+        repetition_penalty: Optional[float] = input_kwargs.pop(
+            "repetition_penalty", None)
+        length_penalty: Optional[float] = input_kwargs.pop(
+            "length_penalty", None)
+        frequency_penalty: Optional[float] = input_kwargs.pop(
+            "frequency_penalty", None)
+        presence_penalty: Optional[float] = input_kwargs.pop(
+            "presence_penalty", None)
         max_length: Optional[int] = input_kwargs.pop("max_length", None)
-        max_new_tokens: Optional[int] = input_kwargs.pop("max_new_tokens", None)
+        max_new_tokens: Optional[int] = input_kwargs.pop(
+            "max_new_tokens", None)
         stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
 
         if "max_new_tokens" in self.generating_args:
@@ -143,19 +153,30 @@ class VllmEngine(BaseEngine):
         sampling_params = SamplingParams(
             n=num_return_sequences,
             repetition_penalty=(
-                repetition_penalty if repetition_penalty is not None else self.generating_args["repetition_penalty"]
+                repetition_penalty if repetition_penalty is not None else self.generating_args[
+                    "repetition_penalty"]
             )
             or 1.0,  # repetition_penalty must > 0
-            temperature=temperature if temperature is not None else self.generating_args["temperature"],
-            top_p=(top_p if top_p is not None else self.generating_args["top_p"]) or 1.0,  # top_p must > 0
+            frequency_penalty=(
+                frequency_penalty if frequency_penalty is not None else self.generating_args["frequency_penalty"]) or 0,
+            presence_penalty=(
+                presence_penalty if presence_penalty is not None else self.generating_args["presence_penalty"]) or 0,
+            temperature=temperature if temperature is not None else self.generating_args[
+                "temperature"],
+            # top_p must > 0
+            top_p=(
+                top_p if top_p is not None else self.generating_args["top_p"]) or 1.0,
             top_k=top_k if top_k is not None else self.generating_args["top_k"],
             use_beam_search=use_beam_search,
-            length_penalty=length_penalty if length_penalty is not None else self.generating_args["length_penalty"],
+            length_penalty=length_penalty if length_penalty is not None else self.generating_args[
+                "length_penalty"],
             stop=stop,
-            stop_token_ids=[self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids,
+            stop_token_ids=[self.tokenizer.eos_token_id] + \
+            self.tokenizer.additional_special_tokens_ids,
             max_tokens=max_tokens,
             skip_special_tokens=True,
         )
+        print('sampling_params: ', sampling_params)
 
         if images is not None:  # add image features
             image_data = []
@@ -173,7 +194,8 @@ class VllmEngine(BaseEngine):
             multi_modal_data = None
 
         result_generator = self.model.generate(
-            inputs={"prompt_token_ids": prompt_ids, "multi_modal_data": multi_modal_data},
+            inputs={"prompt_token_ids": prompt_ids,
+                    "multi_modal_data": multi_modal_data},
             sampling_params=sampling_params,
             request_id=request_id,
             lora_request=self.lora_request,
@@ -221,7 +243,7 @@ class VllmEngine(BaseEngine):
         generated_text = ""
         generator = await self._generate(messages, system, tools, images, videos, **input_kwargs)
         async for result in generator:
-            delta_text = result.outputs[0].text[len(generated_text) :]
+            delta_text = result.outputs[0].text[len(generated_text):]
             generated_text = result.outputs[0].text
             yield delta_text
 
