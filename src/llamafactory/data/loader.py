@@ -128,7 +128,7 @@ def _load_single_dataset(
             cache_dir=model_args.cache_dir,
             token=model_args.hf_hub_token,
             streaming=data_args.streaming,
-            trust_remote_code=True,
+            trust_remote_code=model_args.trust_remote_code,
         )
 
     if dataset_attr.num_samples is not None and not data_args.streaming:
