@@ -29,6 +29,7 @@ from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
 
 
+
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedModel, PreTrainedTokenizer, ProcessorMixin
 
@@ -41,6 +42,7 @@ logger = logging.get_logger(__name__)
 class TokenizerModule(TypedDict):
     tokenizer: "PreTrainedTokenizer"
     processor: Optional["ProcessorMixin"]
+
 
 
 def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:

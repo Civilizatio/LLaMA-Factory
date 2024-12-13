@@ -1,0 +1,22 @@
+model_name_or_path: /home/like/Models/Llama-3.2-1B-Instruct
+template: llama3
+# infer_backend: vllm
+# vllm_enforce_eager: true
+
+
+do_predict: true
+## dataset
+eval_dataset: alpaca_cleaned
+cutoff_len: 1024
+max_samples: 50
+overwrite_cache: true
+preprocessing_num_workers: 16
+
+### output
+output_dir: saves/llama3-1b/predict
+overwrite_output_dir: true
+
+### eval
+per_device_eval_batch_size: 1
+predict_with_generate: true
+ddp_timeout: 18000000
